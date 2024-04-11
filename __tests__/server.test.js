@@ -1,6 +1,7 @@
 "use strict";
 
 require("dotenv").config();
+process.env.SECRET = "TEST_SECRET";
 const { server } = require("../src/server.js");
 const { sequelize, food, clothes } = require("../src/models");
 const supertest = require("supertest");
