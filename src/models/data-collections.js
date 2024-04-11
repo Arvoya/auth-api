@@ -1,11 +1,10 @@
-'use strict';
+"use strict";
 
 // THIS IS THE STRETCH GOAL ...
 // It takes in a schema in the constructor and uses that instead of every collection
 // being the same and requiring their own schema. That's not very DRY!
 
 class DataCollection {
-
   constructor(model) {
     this.model = model;
   }
@@ -13,8 +12,7 @@ class DataCollection {
   get(id) {
     if (id) {
       return this.model.findOne({ where: { id } });
-    }
-    else {
+    } else {
       return this.model.findAll({});
     }
   }
@@ -24,14 +22,14 @@ class DataCollection {
   }
 
   update(id, data) {
-    return this.model.findOne({ where: { id } })
-      .then(record => record.update(data));
+    return this.model
+      .findOne({ where: { id } })
+      .then((record) => record.update(data));
   }
 
   delete(id) {
-    return this.model.destroy({ where: { id }});
+    return this.model.destroy({ where: { id } });
   }
-
 }
 
 module.exports = DataCollection;

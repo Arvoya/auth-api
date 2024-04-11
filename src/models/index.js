@@ -17,7 +17,7 @@ const food = foodModel(sequelize, DataTypes);
 const clothes = clothesModel(sequelize, DataTypes);
 
 module.exports = {
-  db: sequelize,
+  sequelize,
   food: new Collection(food),
   clothes: new Collection(clothes),
 };

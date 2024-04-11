@@ -1,6 +1,4 @@
-# PROJECT NAME
-
-Project description goes here.
+# Auth-API
 
 ## Getting Started
 
@@ -11,7 +9,7 @@ Please use the appropriate [Editorconfig](http://editorconfig.org/) plugin for y
 
 ### Install
 
-    git clone https://github.com/brockbritton/auth-api.git
+    git clone git@github.com:Arvoya/auth-api.git
     cd auth-api
     npm install
 
@@ -26,19 +24,72 @@ Any environment configuration steps.
 
 ## Architecture
 
-Describe how the project is structured.
+```text
+├── .github
+│   ├── workflows
+│   │   └── node.yml
+├── __tests__
+│   ├── auth.test.js (integration test)
+│   └── server.test.js
+├── src
+│   ├── auth
+│   │   ├── middleware
+│   │   │   ├── acl.js
+│   │   │   ├── basic.js
+│   │   │   ├── basic.test.js (unit test)
+│   │   │   └── bearer.js
+│   │   │   ├── bearer.test.js
+│   │   ├── models
+│   │   │   └── users.js
+│   │   └── routes.js
+│   ├── error-handlers
+│   │   ├── 404.js
+│   │   └── 500.js
+│   ├── middleware
+│   │   └── logger.js
+│   ├── models
+│   │   ├── clothes
+│   │   │   └── model.js
+│   │   ├── food
+│   │   │   └── model.js
+│   │   ├── data-collections.js
+│   │   └── index.js
+│   ├── routes
+│   │   ├── v1.js
+│   │   └── v2.js
+│   └── server.js
+├── .eslintrc.json
+├── .gitignore
+├── index.js
+├── package.json
+└── README.md
+```
 
 ### Languages & tools
 
-Explain what tools are used.
+* JavaScript
+* Node
+* Express
+* Sqlite3
+* Jest
+* SuperTest
+* Eslint
+* Dotenv
+* Jsonwebtoken
+* Bcrypt
+* Base-64
+* PG
+* Cors
+* Nodemon
+* Sequelize
+* Sequilize-cli
 
 ## Change Log
 
-List versioned releases.
+0.0.1 - 2024-04-10
 
 ## Collaborators
 
-Kawika Reveira
-Isai Chaidez
-Mak Trnka
-
+* Kawika Reveira
+* Brock Britton
+* Mak Trnka
