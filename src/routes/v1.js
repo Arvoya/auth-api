@@ -28,8 +28,15 @@ async function handleGetAll(req, res) {
 
 async function handleGetOne(req, res) {
   const id = req.params.id;
-  let theRecord = await req.model.get(id);
-  res.status(200).json(theRecord);
+  if(req.query.include){
+    console.log(req.model.model);
+    let apptRecord = await req.model.model.getWithRecsAndConcerns(id);
+
+    res.status(200).json(apptRecord);
+  } else {
+    let theRecord = await req.model.get(id);
+    res.status(200).json(theRecord);
+  }
 }
 
 async function handleCreate(req, res) {
