@@ -6,7 +6,6 @@ const authRouter = express.Router();
 const { users } = require("./models");
 const basicAuth = require("./middleware/basic.js");
 const bearerAuth = require("./middleware/bearer.js");
-const permissions = require("./middleware/acl.js");
 
 authRouter.post("/signup", async (req, res, next) => {
   try {
@@ -29,16 +28,15 @@ authRouter.post("/signin", basicAuth, (req, res, next) => {
   res.status(200).json(user);
 });
 
-authRouter.get(
-  "/users",
-  bearerAuth,
-  permissions("delete"),
-  async (req, res, next) => {
+authRouter.get("/users", bearerAuth, async (req, res, next) => {
+  if (req.user.role !== "practitioner") {
+    res.status(403).send("You are not authorized to view this page");
+  } else {
     const userRecords = await users.findAll({});
     const list = userRecords.map((user) => user.username);
     res.status(200).json(list);
-  },
-);
+  }
+});
 
 authRouter.get("/secret", bearerAuth, async (req, res, next) => {
   res.status(200).send("Welcome to the secret area");

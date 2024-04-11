@@ -1,15 +1,19 @@
-'use strict';
+"use strict";
 
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
-const SECRET = process.env.SECRET || 'arvoya';
+const SECRET = process.env.SECRET || "arvoya";
 
 const userModel = (sequelize, DataTypes) => {
-  const model = sequelize.define('Users', {
+  const model = sequelize.define("Users", {
     username: { type: DataTypes.STRING, required: true, unique: true },
     password: { type: DataTypes.STRING, required: true },
-    role: { type: DataTypes.ENUM('client', 'practitioner'), required: true, defaultValue: 'client'},
+    role: {
+      type: DataTypes.ENUM("client", "practitioner"),
+      required: true,
+      defaultValue: "client",
+    },
     token: {
       type: DataTypes.VIRTUAL,
       get() {
@@ -25,16 +29,17 @@ const userModel = (sequelize, DataTypes) => {
       get() {
         const acl = {
           client: {
-            concerns: ['read', 'create', 'update', 'delete'],
-            recs: ['read'],
-            appts: ['read', 'create']
+            concerns: ["read", "create", "update", "delete"],
+            recs: ["read"],
+            appts: ["read", "create"],
           },
           practitioner: {
-            recs: ['read', 'create', 'update', 'delete'],
-            concerns: ['read'],
-            appts: ['read']
-          }
-        }
+            recs: ["read", "create", "update", "delete"],
+            concerns: ["read"],
+            appts: ["read"],
+            users: ["read"],
+          },
+        };
         return acl[this.role];
       },
     },
@@ -46,19 +51,22 @@ const userModel = (sequelize, DataTypes) => {
   });
 
   model.authenticateBasic = async function (username, password) {
-    console.log(username, password);
     const user = await this.findOne({ where: { username } });
     const valid = await bcrypt.compare(password, user.password);
-    if (valid) { return user; }
-    throw new Error('Invalid User');
+    if (valid) {
+      return user;
+    }
+    throw new Error("Invalid User");
   };
 
   model.authenticateToken = async function (token) {
     try {
       const parsedToken = jwt.verify(token, SECRET);
-      const user = this.findOne({where: { username: parsedToken.username } });
-      if (user) { return user; }
-      throw new Error('User Not Found');
+      const user = this.findOne({ where: { username: parsedToken.username } });
+      if (user) {
+        return user;
+      }
+      throw new Error("User Not Found");
     } catch (e) {
       throw new Error(e.message);
     }

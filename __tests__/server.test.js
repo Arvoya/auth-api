@@ -1,42 +1,47 @@
 "use strict";
 
 require("dotenv").config();
-process.env.SECRET = "TEST_SECRET";
+process.env.SECRET = "arvoyaTEST";
 const { server } = require("../src/server.js");
-const { sequelize, food, clothes } = require("../src/models");
+const { sequelize, appts, recs, concerns } = require("../src/models");
 const supertest = require("supertest");
 const jwt = require("jsonwebtoken");
 const { db, users } = require("../src/auth/models/index.js");
 
 const request = supertest(server);
 
-let foodItem;
-let foodItem2;
-let clothesItem;
-let user;
+let appt1;
+let rec1;
+let concern1;
+let practitioner;
+let client;
 
 beforeAll(async () => {
   await db.sync();
   await sequelize.sync();
-  foodItem = await food.create({
-    name: "apple",
-    calories: 100,
-    type: "fruit",
+  practitioner = await users.create({
+    username: "p",
+    password: "p",
+    role: "practitioner",
   });
-  foodItem2 = await food.create({
-    name: "eggplant",
-    calories: 500,
-    type: "fruit",
+  client = await users.create({
+    username: "c",
+    password: "c",
+    role: "client",
   });
-  clothesItem = await clothes.create({
-    name: "shirt",
-    color: "blue",
-    size: "medium",
+  appt1 = await appts.create({
+    date: new Date(),
+    type: "in-person",
   });
-  user = await users.create({
-    username: "testA",
-    password: "testA",
-    role: "admin",
+  concern1 = await concerns.create({
+    description: "OWIE",
+    type: "physical",
+    appointmentID: 1,
+  });
+  rec1 = await recs.create({
+    description: "meditateTest",
+    type: "physical",
+    appointmentID: 1,
   });
 });
 
@@ -45,78 +50,61 @@ afterAll(async () => {
   await sequelize.drop();
 });
 
-describe("Food and Clothes V1-routes", () => {
-  it("Should create a new food item on POST /food", async () => {
+describe("Testing Recs, Concerns, Appts", () => {
+  it("Client should create a new appt on POST /appts", async () => {
+    let token = jwt.sign({ username: client.username }, process.env.SECRET);
     const response = await request
-      .post("/api/v1/food")
-      .send({ name: "banana", calories: 150, type: "fruit" });
-    expect(response.status).toBe(201);
-    expect(response.body.name).toBe("banana");
-  });
-  it("should get a list of food items on GET /food", async () => {
-    const response = await request.get("/api/v1/food");
-    expect(response.status).toBe(200);
-    expect(response.body).toBeTruthy();
-  });
-  it("should get a food item on GET /food/:id", async () => {
-    const response = await request.get(`/api/v1/food/${foodItem.id}`);
-    expect(response.status).toBe(200);
-    expect(response.body.name).toBe("apple");
-  });
-  it("should update a food item on PUT /food/:id", async () => {
-    const response = await request
-      .put(`/api/v1/food/${foodItem.id}`)
-      .send({ name: "orange", calories: 200, type: "fruit" });
-    expect(response.status).toBe(200);
-    expect(response.body.name).toBe("orange");
-  });
-  it("should delete a food item on DELETE /food/:id", async () => {
-    const response = await request.delete(`/api/v1/food/${foodItem.id}`);
-    expect(response.status).toBe(200);
-  });
-});
-
-describe("Food and Clothes V2-routes", () => {
-  it("Should create a new food item on POST /food", async () => {
-    let token = jwt.sign({ username: user.username }, process.env.SECRET);
-    const response = await request
-      .post("/api/v2/food")
+      .post("/api/v2/appts")
       .set("Authorization", `Bearer ${token}`)
-      .send({ name: "banana", calories: 150, type: "fruit" });
+      .send({ date: new Date(), type: "virtual" });
 
     expect(response.status).toBe(201);
-    expect(response.body.name).toBe("banana");
+    expect(response.body.type).toBe("virtual");
   });
-  it("should get a list of food items on GET /food", async () => {
-    let token = jwt.sign({ username: user.username }, process.env.SECRET);
+  it("Client should get a list of appts on GET /appts", async () => {
+    let token = jwt.sign({ username: client.username }, process.env.SECRET);
     const response = await request
-      .get("/api/v2/food")
+      .get("/api/v2/appts")
       .set("Authorization", `Bearer ${token}`);
     expect(response.status).toBe(200);
     expect(response.body).toBeTruthy();
   });
-  it("should get a food item on GET /food/:id", async () => {
-    let token = jwt.sign({ username: user.username }, process.env.SECRET);
+  it("Client should get a appt on GET /appts/:id", async () => {
+    let token = jwt.sign({ username: client.username }, process.env.SECRET);
     const response = await request
-      .get(`/api/v2/food/${foodItem2.id}`)
+      .get(`/api/v2/appts/${appt1.id}`)
       .set("Authorization", `Bearer ${token}`);
     expect(response.status).toBe(200);
-    expect(response.body.name).toBe("eggplant");
+    expect(response.body[0].Recommendations[0].description).toBe(
+      "meditateTest",
+    );
   });
-  it("should update a food item on PUT /food/:id", async () => {
-    let token = jwt.sign({ username: user.username }, process.env.SECRET);
+  it("Practitioner should get concerns from the appointment their client made from GET /appts/:id", async () => {
+    let token = jwt.sign(
+      { username: practitioner.username },
+      process.env.SECRET,
+    );
     const response = await request
-      .put(`/api/v2/food/${foodItem2.id}`)
+      .get(`/api/v2/appts/${appt1.id}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body[0].Concerns[0].description).toBe("OWIE");
+  });
+  it("Practitioner should update a recommendation on PUT /recs/:id", async () => {
+    let token = jwt.sign(
+      { username: practitioner.username },
+      process.env.SECRET,
+    );
+    const response = await request
+      .put(`/api/v2/recs/${rec1.id}`)
       .set("Authorization", `Bearer ${token}`)
-      .send({ name: "grape", calories: 200, type: "fruit" });
+      .send({
+        description: "how about you stop",
+        type: "physical",
+        appointmentID: 1,
+      });
     expect(response.status).toBe(200);
-    expect(response.body.name).toBe("grape");
-  });
-  it("should delete a food item on DELETE /food/:id", async () => {
-    let token = jwt.sign({ username: user.username }, process.env.SECRET);
-    const response = await request
-      .delete(`/api/v2/food/${foodItem.id}`)
-      .set("Authorization", `Bearer ${token}`);
-    expect(response.status).toBe(200);
+    expect(response.body.description).toEqual("how about you stop");
   });
 });

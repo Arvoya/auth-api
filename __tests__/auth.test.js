@@ -1,21 +1,21 @@
 "use strict";
 
 require("dotenv").config();
-process.env.SECRET = "TEST_SECRET";
+process.env.SECRET = "arvoyaTEST";
 const { server } = require("../src/server.js");
 const { db, users } = require("../src/auth/models");
 const jwt = require("jsonwebtoken");
 const supertest = require("supertest");
 
 const request = supertest(server);
-let user;
+let userP;
 
 beforeAll(async () => {
   await db.sync();
-  user = await users.create({
+  userP = await users.create({
     username: "testA",
     password: "testA",
-    role: "admin",
+    role: "practitioner",
   });
 });
 
@@ -23,28 +23,62 @@ afterAll(async () => {
   db.drop();
 });
 
-describe("Auth routes", () => {
-  it("Should create a new user on POST /signup", async () => {
+describe("Client Auth routes", () => {
+  it("Should create a new client on POST /signup", async () => {
     const response = await request
       .post("/auth/signup")
-      .send({ username: "test", password: "test" });
+      .send({ username: "testC", password: "testC" });
     expect(response.status).toBe(201);
-    expect(response.body.user.username).toBe("test");
+    expect(response.body.user.username).toBe("testC");
     expect(response.body.token).toBeTruthy();
   });
 
-  it("should sign in with basic auth", async () => {
-    const response = await request.post("/auth/signin").auth("test", "test");
+  it("Client should sign in with basic auth", async () => {
+    const response = await request.post("/auth/signin").auth("testC", "testC");
     expect(response.status).toBe(200);
-    expect(response.body.user.username).toBe("test");
+    expect(response.body.user.username).toBe("testC");
     expect(response.body.token).toBeTruthy();
   });
 
-  //NOTE: THANKS COPILOT: "Check if the `jwt.sign` method is used correctly. It usually takes an object as the first argument and the secret as the second argument. If `user.username` is a string, you might want to change it to an object, like `{username: user.username}`."
+  it("should not get a list of clients on GET /users", async () => {
+    let token = jwt.sign({ username: "testC" }, process.env.SECRET);
+    const response = await request
+      .get("/auth/users")
+      .set("Authorization", `Bearer ${token}`);
 
-  it("should get a list of users on GET /users", async () => {
-    let token = jwt.sign({ username: user.username }, process.env.SECRET);
-    console.log("user:", user.username, "token:", token);
+    expect(response.status).toBe(403);
+  });
+
+  it("should get a secret on GET /secret", async () => {
+    let token = jwt.sign({ username: userP.username }, process.env.SECRET);
+    const response = await request
+      .get("/auth/secret")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.text).toBe("Welcome to the secret area");
+  });
+});
+
+describe("Practitioner Auth routes", () => {
+  it("Should create a new practitioner on POST /signup", async () => {
+    const response = await request
+      .post("/auth/signup")
+      .send({ username: "testP", password: "testP", role: "practitioner" });
+    expect(response.status).toBe(201);
+    expect(response.body.user.username).toBe("testP");
+    expect(response.body.token).toBeTruthy();
+  });
+
+  it("Client should sign in with basic auth", async () => {
+    const response = await request.post("/auth/signin").auth("testP", "testP");
+    expect(response.status).toBe(200);
+    expect(response.body.user.username).toBe("testP");
+    expect(response.body.token).toBeTruthy();
+  });
+
+  it("should get a list of clients on GET /users", async () => {
+    let token = jwt.sign({ username: userP.username }, process.env.SECRET);
     const response = await request
       .get("/auth/users")
       .set("Authorization", `Bearer ${token}`);
@@ -54,7 +88,7 @@ describe("Auth routes", () => {
   });
 
   it("should get a secret on GET /secret", async () => {
-    let token = jwt.sign({ username: user.username }, process.env.SECRET);
+    let token = jwt.sign({ username: userP.username }, process.env.SECRET);
     const response = await request
       .get("/auth/secret")
       .set("Authorization", `Bearer ${token}`);
