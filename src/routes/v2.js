@@ -23,6 +23,7 @@ router.post("/:model", bearer, permissions("create"), handleCreate);
 router.put("/:model/:id", bearer, permissions("update"), handleUpdate);
 router.delete("/:model/:id", bearer, permissions("delete"), handleDelete);
 
+
 async function handleGetAll(req, res) {
   let allRecords = await req.model.get();
   res.status(200).json(allRecords);
@@ -30,8 +31,16 @@ async function handleGetAll(req, res) {
 
 async function handleGetOne(req, res) {
   const id = req.params.id;
-  let theRecord = await req.model.get(id);
-  res.status(200).json(theRecord);
+  const model = req.params.model
+  console.log('I AM THE MODEL', model);
+  if(model == 'appts' ){
+    let apptRecord = await req.model.model.getWithRecsAndConcerns(id);
+    res.status(200).json(apptRecord);
+  } else {
+    let theRecord = await req.model.get(id);
+    res.status(200).json(theRecord);
+  }
+
 }
 
 async function handleCreate(req, res) {
